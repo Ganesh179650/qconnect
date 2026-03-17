@@ -321,35 +321,9 @@ function stopScreenCapture() {
 }
 
 // QR Scanner functionality
-async function startScanning() {
-    showPage('scannerPage');
-    
-    try {
-        // Request camera permissions first
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-                facingMode: 'environment',
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
-            }
-        });
-        
-        elements.scannerVideo.srcObject = stream;
-        
-        // Store stream reference for cleanup
-        window.cameraStream = stream;
-        
-        // Wait for video to load
-        elements.scannerVideo.onloadedmetadata = () => {
-            elements.scannerVideo.play();
-            initializeQRScanner();
-        };
-        
-    } catch (error) {
-        console.error('Error accessing camera:', error);
-        showToast('Failed to access camera. Please check permissions.', 'error');
-        showPage('homePage');
-    }
+function startScanning() {
+    // Redirect to simple scanner page
+    window.location.href = 'simple-scanner.html';
 }
 
 function initializeQRScanner() {

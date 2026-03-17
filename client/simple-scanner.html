@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QCast - Simple Scanner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 300px;
+            margin: 20px auto;
+            border-radius: 15px;
+            overflow: hidden;
+            background: #000;
+            aspect-ratio: 1;
+        }
+
+        #cameraVideo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .scan-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            border: 3px solid #00ff00;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ff00, transparent);
+            animation: scan 2s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+
+        button {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.6);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+        }
+
+        .success {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.5);
+        }
+
+        .input-group {
+            margin: 20px 0;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-btn">← Back</a>
+    
+    <div class="container">
+        <h1>🎯 QCast Scanner</h1>
+        
+        <div class="status" id="status">
+            Click "Start Camera" to begin scanning
+        </div>
+
+        <div class="video-container" id="videoContainer" style="display: none;">
+            <video id="cameraVideo" autoplay playsinline></video>
+            <div class="scan-overlay">
+                <div class="scan-line"></div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <input type="text" id="sessionIdInput" placeholder="Or enter Session ID manually">
+            <button onclick="joinManually()">Join Session</button>
+        </div>
+
+        <button id="startBtn" onclick="startCamera()">📷 Start Camera</button>
+        <button id="stopBtn" onclick="stopCamera()" style="display: none;">⏹️ Stop Camera</button>
+        <button onclick="simulateScan()">🔍 Simulate QR Scan</button>
+    </div>
+
+    <script>
+        let stream = null;
+        let scanning = false;
+
+        async function startCamera() {
+            const status = document.getElementById('status');
+            const video = document.getElementById('cameraVideo');
+            const videoContainer = document.getElementById('videoContainer');
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+
+            try {
+                status.textContent = 'Requesting camera permission...';
+                status.className = 'status';
+
+                // Request camera with specific constraints
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                });
+
+                // Set video stream
+                video.srcObject = stream;
+                
+                // Wait for video to load
+                video.onloadedmetadata = () => {
+                    video.play();
+                    videoContainer.style.display = 'block';
+                    startBtn.style.display = 'none';
+                    stopBtn.style.display = 'inline-block';
+                    status.textContent = 'Camera ready! Point at QR code or click Simulate Scan';
+                    status.className = 'status success';
+                    
+                    // Start scanning simulation
+                    setTimeout(() => {
+                        if (scanning) {
+                            simulateScan();
+                        }
+                    }, 3000);
+                };
+
+                scanning = true;
+
+            } catch (error) {
+                console.error('Camera error:', error);
+                status.textContent = `Camera error: ${error.message}. Try using manual input or simulate scan.`;
+                status.className = 'status error';
+                
+                // Show specific error messages
+                if (error.name === 'NotAllowedError') {
+                    status.textContent = 'Camera permission denied. Please allow camera access and try again.';
+                } else if (error.name === 'NotFoundError') {
+                    status.textContent = 'No camera found. Please use manual session ID input.';
+                } else if (error.name === 'NotSecureError') {
+                    status.textContent = 'Camera requires HTTPS. Please use https://localhost:3443 or manual input.';
+                }
+            }
+        }
+
+        function stopCamera() {
+            const status = document.getElementById('status');
+            const video = document.getElementById('cameraVideo');
+            const videoContainer = document.getElementById('videoContainer');
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+
+            video.srcObject = null;
+            videoContainer.style.display = 'none';
+            startBtn.style.display = 'inline-block';
+            stopBtn.style.display = 'none';
+            scanning = false;
+
+            status.textContent = 'Camera stopped. Click Start Camera to try again.';
+            status.className = 'status';
+        }
+
+        function simulateScan() {
+            const status = document.getElementById('status');
+            
+            // Generate a random session ID for testing
+            const sessionId = 'TEST' + Math.random().toString(36).substring(2, 8).toUpperCase();
+            
+            status.textContent = `QR Code detected! Session: ${sessionId}`;
+            status.className = 'status success';
+            
+            // Join the session after a short delay
+            setTimeout(() => {
+                joinSession(sessionId);
+            }, 1500);
+        }
+
+        function joinManually() {
+            const sessionId = document.getElementById('sessionIdInput').value.trim();
+            const status = document.getElementById('status');
+            
+            if (!sessionId) {
+                status.textContent = 'Please enter a Session ID';
+                status.className = 'status error';
+                return;
+            }
+            
+            status.textContent = `Joining session: ${sessionId}`;
+            status.className = 'status success';
+            
+            joinSession(sessionId);
+        }
+
+        function joinSession(sessionId) {
+            // Stop camera if running
+            if (stream) {
+                stopCamera();
+            }
+            
+            // Redirect to join page with session ID
+            window.location.href = `join.html?session=${sessionId}`;
+        }
+
+        // Check camera support on page load
+        window.addEventListener('load', () => {
+            const status = document.getElementById('status');
+            
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                status.textContent = 'Camera not supported in this browser. Please use manual input.';
+                status.className = 'status error';
+            } else {
+                status.textContent = 'Camera supported! Click Start Camera to begin.';
+            }
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        });
+    </script>
+</body>
+</html>
