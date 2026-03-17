@@ -325,6 +325,7 @@ async function startScanning() {
     showPage('scannerPage');
     
     try {
+        // Request camera permissions first
         const stream = await navigator.mediaDevices.getUserMedia({
             video: {
                 facingMode: 'environment',
@@ -338,8 +339,11 @@ async function startScanning() {
         // Store stream reference for cleanup
         window.cameraStream = stream;
         
-        // Initialize QR scanner
-        initializeQRScanner();
+        // Wait for video to load
+        elements.scannerVideo.onloadedmetadata = () => {
+            elements.scannerVideo.play();
+            initializeQRScanner();
+        };
         
     } catch (error) {
         console.error('Error accessing camera:', error);
@@ -353,38 +357,62 @@ function initializeQRScanner() {
     const script = document.createElement('script');
     script.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
     script.onload = () => {
-        startQRScanning();
+        if (window.Html5Qrcode) {
+            startQRScanning();
+        } else {
+            console.error('Html5Qrcode library not loaded');
+            showToast('QR scanner library failed to load', 'error');
+        }
+    };
+    script.onerror = () => {
+        console.error('Failed to load QR scanner library');
+        showToast('Failed to load QR scanner. Check internet connection.', 'error');
     };
     document.head.appendChild(script);
 }
 
 function startQRScanning() {
-    window.html5QrCode = new Html5Qrcode("qrScanner");
-    
-    const config = {
-        fps: 10,
-        qrbox: { width: 250, height: 250 },
-        aspectRatio: 1.0
-    };
-    
-    window.html5QrCode.start(
-        { facingMode: "environment" },
-        config,
-        (decodedText, decodedResult) => {
-            // QR code scanned successfully
-            handleQRCodeScan(decodedText);
-            
-            // Stop scanner after successful scan
+    try {
+        window.html5QrCode = new Html5Qrcode("qrScanner");
+        
+        const config = {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0
+        };
+        
+        window.html5QrCode.start(
+            { facingMode: "environment" },
+            config,
+            (decodedText, decodedResult) => {
+                // QR code scanned successfully
+                handleQRCodeScan(decodedText);
+                
+                // Stop scanner after successful scan
+                stopScanner();
+            },
+            (errorMessage) => {
+                // Handle scan error silently
+            }
+        ).catch((err) => {
+            console.error('Unable to start QR scanner:', err);
+            showToast('Failed to start QR scanner', 'error');
             stopScanner();
-        },
-        (errorMessage) => {
-            // Handle scan error silently
-        }
-    ).catch((err) => {
-        console.error('Unable to start QR scanner:', err);
-        showToast('Failed to start QR scanner', 'error');
-        stopScanner();
-    });
+        });
+    } catch (error) {
+        console.error('QR scanner error:', error);
+        showToast('QR scanner not available. Using manual input.', 'warning');
+        showManualInput();
+    }
+}
+
+function showManualInput() {
+    // Fallback to manual session ID input
+    const sessionId = prompt('Enter Session ID manually:');
+    if (sessionId) {
+        currentSessionId = sessionId;
+        window.location.href = `join.html?session=${sessionId}`;
+    }
 }
 
 function handleQRCodeScan(decodedText) {
