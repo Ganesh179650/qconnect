@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple QCast Icons</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+        }
+        .container { 
+            max-width: 500px; 
+            margin: 0 auto; 
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        h1 { 
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+        button { 
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white; 
+            border: none; 
+            padding: 12px 25px; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-size: 14px;
+            margin: 10px;
+        }
+        button:hover { 
+            transform: translateY(-2px);
+        }
+        .icon-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); 
+            gap: 10px; 
+            margin: 20px 0;
+        }
+        .icon-item { 
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        canvas { 
+            border: 1px solid rgba(255, 255, 255, 0.3); 
+            border-radius: 6px;
+            width: 100%;
+            cursor: pointer;
+        }
+        .icon-item p { 
+            margin: 5px 0; 
+            font-size: 10px; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Simple QCast Icons</h1>
+        <p>Click each icon to download</p>
+        
+        <div class="icon-grid" id="iconGrid"></div>
+        
+        <button onclick="downloadAll()">⬇️ Download All</button>
+    </div>
+
+    <script>
+        const iconSizes = [
+            { size: 72, name: 'icon-72x72.png' },
+            { size: 96, name: 'icon-96x96.png' },
+            { size: 128, name: 'icon-128x128.png' },
+            { size: 144, name: 'icon-144x144.png' },
+            { size: 152, name: 'icon-152x152.png' },
+            { size: 192, name: 'icon-192x192.png' },
+            { size: 384, name: 'icon-384x384.png' },
+            { size: 512, name: 'icon-512x512.png' }
+        ];
+
+        function createSimpleIcon(size, name) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // Simple gradient background
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+
+            // Simple rounded corners
+            ctx.globalCompositeOperation = 'destination-in';
+            ctx.beginPath();
+            ctx.roundRect(0, 0, size, size, size * 0.2);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+
+            // Simple text
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${size * 0.3}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Q', size * 0.5, size * 0.4);
+            
+            ctx.font = `${size * 0.15}px Arial`;
+            ctx.fillText('Cast', size * 0.5, size * 0.6);
+
+            return canvas;
+        }
+
+        // Generate icons
+        const grid = document.getElementById('iconGrid');
+        const canvases = [];
+        
+        iconSizes.forEach(({ size, name }) => {
+            const canvas = createSimpleIcon(size, name);
+            canvases.push({ canvas, name });
+            
+            const container = document.createElement('div');
+            container.className = 'icon-item';
+
+            const label = document.createElement('p');
+            label.textContent = name;
+
+            canvas.addEventListener('click', () => {
+                const link = document.createElement('a');
+                link.download = name;
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+
+            container.appendChild(canvas);
+            container.appendChild(label);
+            grid.appendChild(container);
+        });
+
+        function downloadAll() {
+            canvases.forEach(({ canvas, name }, index) => {
+                setTimeout(() => {
+                    const link = document.createElement('a');
+                    link.download = name;
+                    link.href = canvas.toDataURL();
+                    link.click();
+                }, index * 200);
+            });
+        }
+    </script>
+</body>
+</html>

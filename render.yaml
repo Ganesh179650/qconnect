@@ -1,0 +1,45 @@
+services:
+  # Web Service
+  - type: web
+    name: instant-screenshare
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    
+    # Environment Variables
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: HOST
+        value: 0.0.0.0
+      - key: CORS_ORIGIN
+        value: https://instant-screenshare.onrender.com
+        sync: false
+    
+    # Build Configuration
+    build:
+      baseDirectory: /
+      nodeVersion: 18
+      npmVersion: 9
+      
+    # Instance Configuration
+    instanceType: free
+    region: oregon
+    
+    # HTTP Configuration
+    httpPort: 10000
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin

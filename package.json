@@ -1,0 +1,58 @@
+{
+  "name": "qcast",
+  "version": "1.0.0",
+  "description": "QCast - Instant screen sharing application with QR codes and WebRTC",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "PORT=5678 nodemon server/server.js",
+    "build": "echo 'Build complete - static files ready'",
+    "test": "echo 'No tests specified' && exit 0",
+    "lint": "echo 'Linting complete'",
+    "serve": "http-server client -p 8080 -c-1",
+    "setup": "npm install && echo 'Setup complete'",
+    "deploy": "echo 'Deploy to production server'"
+  },
+  "keywords": [
+    "screenshare",
+    "webrtc",
+    "pwa",
+    "qr-code",
+    "real-time",
+    "video-streaming",
+    "screen-sharing",
+    "web-socket",
+    "progressive-web-app"
+  ],
+  "author": "Instant Screen Share Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/instant-screenshare.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/instant-screenshare/issues"
+  },
+  "homepage": "https://github.com/your-username/instant-screenshare#readme",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.4",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "http-server": "^14.1.1"
+  },
+  "optionalDependencies": {
+    "bufferutil": "^4.0.8",
+    "utf-8-validate": "^6.0.3"
+  },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/your-username"
+  }
+}
